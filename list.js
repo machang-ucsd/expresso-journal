@@ -1,8 +1,32 @@
 const spotsEl = document.getElementById("spots");
 const locStatusEl = document.getElementById("locStatus");
 const refreshBtn = document.getElementById("refreshBtn");
+const viewToggleBtn = document.getElementById("viewToggleBtn");
 
 let userLocation = null;
+
+// --- VIEW MODE LOGIC ---
+// Check saved preference
+const savedView = localStorage.getItem("viewMode");
+if (savedView === "compact") {
+  document.body.classList.add("compact-view");
+  viewToggleBtn.textContent = "Card View";
+} else {
+  viewToggleBtn.textContent = "List View";
+}
+
+viewToggleBtn.addEventListener("click", () => {
+  const isCompact = document.body.classList.toggle("compact-view");
+  
+  if (isCompact) {
+    viewToggleBtn.textContent = "Card View";
+    localStorage.setItem("viewMode", "compact");
+  } else {
+    viewToggleBtn.textContent = "List View";
+    localStorage.setItem("viewMode", "card");
+  }
+});
+// -----------------------
 
 refreshBtn.addEventListener("click", () => {
   refresh();
@@ -27,7 +51,7 @@ async function refresh() {
   }
 
   const logs = await loadLogs();
-  refreshBtn.textContent = "Refresh List";
+  refreshBtn.textContent = "Refresh";
   refreshBtn.disabled = false;
 
   if (!logs.length) {
@@ -126,47 +150,46 @@ function renderSpots(spots) {
     header.className = "card-header";
     
     const titleGroup = document.createElement("div");
+    // Ensure Flex behavior for compact mode alignment
+    titleGroup.style.display = "flex";
+    titleGroup.style.alignItems = "center";
+    titleGroup.style.gap = "8px";
+
     const nameEl = document.createElement("div");
     nameEl.className = "store-name";
     nameEl.textContent = entry.storeName || entry.ssid || "Unknown Spot";
     
-    // -- BADGE CONTAINER --
     const badgeContainer = document.createElement("div");
     badgeContainer.style.display = "flex";
     badgeContainer.style.gap = "8px";
     badgeContainer.style.alignItems = "center";
 
-    // SSID Badge
     const ssidEl = document.createElement("div");
     ssidEl.className = "ssid-badge";
     ssidEl.textContent = entry.ssid || "No SSID";
     badgeContainer.appendChild(ssidEl);
 
-    // -- PASSWORD REVEAL LOGIC --
     if (entry.password) {
       const passEl = document.createElement("div");
-      // Styling it to look like a clickable secret badge
-      passEl.className = "ssid-badge"; // Reuse base badge style
+      passEl.className = "ssid-badge";
       passEl.style.backgroundColor = "#fff";
       passEl.style.border = "1px solid #e6dccf";
       passEl.style.cursor = "pointer";
       passEl.style.userSelect = "none";
       passEl.title = "Click to show password";
       
-      const hiddenText = "🔒 ••••••";
+      const hiddenText = "🔒 •••";
       const visibleText = `🔓 ${entry.password}`;
       let isVisible = false;
 
       passEl.textContent = hiddenText;
-
       passEl.onclick = (e) => {
-        e.stopPropagation(); // Prevent triggering other things
+        e.stopPropagation();
         isVisible = !isVisible;
         passEl.textContent = isVisible ? visibleText : hiddenText;
         passEl.style.backgroundColor = isVisible ? "#fff7ed" : "#fff";
         passEl.style.borderColor = isVisible ? "#d4a373" : "#e6dccf";
       };
-
       badgeContainer.appendChild(passEl);
     }
 
@@ -200,7 +223,7 @@ function renderSpots(spots) {
 
     statsGrid.appendChild(makeStat("Download", dlVal, entry.download_mbps > 50));
     statsGrid.appendChild(makeStat("Upload", ulVal));
-    statsGrid.appendChild(makeStat("Ping", pingVal + "ms"));
+    statsGrid.appendChild(makeStat("Ping", pingVal));
 
     // 3. Note Section
     let noteEl = null;

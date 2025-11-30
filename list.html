@@ -5,16 +5,16 @@
     <title>Coffee WiFi Spots</title>
     <style>
       :root {
-        --bg: #FDFBF7;            /* Cream */
+        --bg: #FDFBF7;
         --card-bg: #ffffff;
-        --text: #433422;          /* Espresso */
-        --text-head: #2c2114;     /* Darker Espresso */
-        --primary: #6f4e37;       /* Coffee */
-        --primary-light: #f3e9e2; /* Foam */
+        --text: #433422;
+        --text-head: #2c2114;
+        --primary: #6f4e37;
+        --primary-light: #f3e9e2;
         --border: #e6dccf;
         --accent: #9c8c74;
-        --accent-gold: #d4a373;   /* Caramel */
-        --success: #388e3c;       /* Organic Green */
+        --accent-gold: #d4a373;
+        --success: #388e3c;
       }
 
       body {
@@ -23,6 +23,7 @@
         background-color: var(--bg);
         color: var(--text);
         padding: 32px;
+        transition: padding 0.2s;
       }
 
       .container {
@@ -34,7 +35,9 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 32px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 16px;
       }
 
       h1 {
@@ -43,15 +46,24 @@
         color: var(--primary);
         font-weight: 800;
         letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
       }
 
       h1::before {
         content: "☕";
         margin-right: 12px;
+        font-size: 1.6rem;
       }
 
-      button#refreshBtn {
-        padding: 10px 20px;
+      .controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      button {
+        padding: 8px 16px;
         background: white;
         border: 2px solid var(--border);
         border-radius: 8px;
@@ -59,22 +71,30 @@
         color: var(--primary);
         cursor: pointer;
         transition: all 0.2s;
-        box-shadow: 0 2px 4px rgba(111, 78, 55, 0.05);
+        font-family: inherit;
+        font-size: 0.85rem;
       }
-      button#refreshBtn:hover {
+      
+      button:hover {
         border-color: var(--primary);
         background: var(--primary-light);
         color: var(--primary);
       }
 
+      button.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+      }
+
       #locStatus {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         color: var(--accent);
-        margin-right: 16px;
+        margin-right: 8px;
         font-style: italic;
       }
 
-      /* Card Grid */
+      /* DEFAULT CARD VIEW */
       #spots {
         display: grid;
         grid-template-columns: 1fr;
@@ -85,13 +105,12 @@
         background: var(--card-bg);
         border-radius: 12px;
         padding: 24px;
-        /* Softer, warmer shadow */
         box-shadow: 0 4px 12px rgba(111, 78, 55, 0.08); 
         border: 1px solid var(--border);
         display: flex;
         flex-direction: column;
         gap: 16px;
-        transition: transform 0.1s ease;
+        transition: all 0.2s ease;
       }
 
       .spot-card:hover {
@@ -126,42 +145,22 @@
         color: var(--accent-gold);
         font-size: 1.2rem;
         letter-spacing: 2px;
-        text-shadow: 0 1px 2px rgba(212, 163, 115, 0.2);
       }
 
-      /* Stats Grid */
       .stats-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 12px;
-        background: #fafaf9; /* Very light gray/warm */
+        background: #fafaf9;
         padding: 16px;
         border-radius: 10px;
         border: 1px dashed var(--border);
         text-align: center;
       }
 
-      .stat-item {
-        display: flex;
-        flex-direction: column;
-      }
-      
-      .stat-label {
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        color: var(--accent);
-        font-weight: 700;
-        margin-bottom: 4px;
-        letter-spacing: 0.05em;
-      }
-
-      .stat-value {
-        font-size: 1.1rem;
-        font-weight: 800;
-        color: var(--text-head);
-        font-variant-numeric: tabular-nums;
-      }
-      
+      .stat-item { display: flex; flex-direction: column; }
+      .stat-label { font-size: 0.7rem; text-transform: uppercase; color: var(--accent); font-weight: 700; margin-bottom: 4px; }
+      .stat-value { font-size: 1.1rem; font-weight: 800; color: var(--text-head); font-variant-numeric: tabular-nums; }
       .stat-value.fast { color: var(--success); }
 
       .note-section {
@@ -182,26 +181,101 @@
         border-top: 1px solid var(--border);
       }
 
-      .timestamp {
-        font-size: 0.8rem;
-        color: var(--accent);
-        font-weight: 500;
-      }
-
+      .timestamp { font-size: 0.8rem; color: var(--accent); font-weight: 500; }
+      
       .btn-delete {
         background: white;
         border: 1px solid #fecaca;
         color: #ef4444;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         font-weight: 600;
         cursor: pointer;
-        padding: 6px 12px;
+        padding: 4px 10px;
         border-radius: 6px;
-        transition: all 0.2s;
       }
-      .btn-delete:hover {
-        background: #fef2f2;
-        border-color: #ef4444;
+      .btn-delete:hover { background: #fef2f2; border-color: #ef4444; }
+
+
+      /* --- COMPACT MODE OVERRIDES --- */
+      body.compact-view #spots {
+        gap: 8px;
+      }
+
+      body.compact-view .spot-card {
+        padding: 10px 16px;
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        border-radius: 8px;
+        /* Remove hover lift in compact mode for stability */
+        transform: none !important; 
+      }
+
+      body.compact-view .card-header {
+        flex: 1;
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 0;
+      }
+
+      body.compact-view .store-name {
+        font-size: 1rem;
+        margin-bottom: 0;
+      }
+      
+      body.compact-view .rating {
+        font-size: 1rem;
+        margin-left: 8px;
+      }
+
+      /* Convert Stats Grid to a simple row line */
+      body.compact-view .stats-grid {
+        display: flex;
+        padding: 0;
+        background: transparent;
+        border: none;
+        gap: 16px;
+        width: auto;
+      }
+
+      body.compact-view .stat-item {
+        flex-direction: row;
+        align-items: baseline;
+        gap: 4px;
+      }
+
+      body.compact-view .stat-label {
+        font-size: 0.75rem;
+        margin-bottom: 0;
+        display: none; /* Hide labels "Download" etc. to save space */
+      }
+      
+      /* Add units via CSS content for compact mode */
+      body.compact-view .stat-item:nth-child(1) .stat-value::after { content: " DL"; font-size: 0.7rem; color: var(--accent); font-weight: normal; }
+      body.compact-view .stat-item:nth-child(2) .stat-value::after { content: " UL"; font-size: 0.7rem; color: var(--accent); font-weight: normal; }
+      body.compact-view .stat-item:nth-child(3) .stat-value::after { content: " ms"; font-size: 0.7rem; color: var(--accent); font-weight: normal; }
+
+      body.compact-view .stat-value {
+        font-size: 0.9rem;
+      }
+
+      /* Hide Note in compact mode */
+      body.compact-view .note-section {
+        display: none;
+      }
+
+      body.compact-view .card-footer {
+        padding-top: 0;
+        border-top: none;
+        margin-top: 0;
+        flex-direction: row-reverse; /* Put delete button first? or just gap them */
+        gap: 12px;
+      }
+      
+      body.compact-view .timestamp {
+        font-size: 0.75rem;
+        /* Hide date on very small screens if needed */
       }
     </style>
   </head>
@@ -209,8 +283,9 @@
     <div class="container">
       <header>
         <h1>Saved Spots</h1>
-        <div>
+        <div class="controls">
           <span id="locStatus"></span>
+          <button id="viewToggleBtn">List View</button>
           <button id="refreshBtn">Refresh</button>
         </div>
       </header>
