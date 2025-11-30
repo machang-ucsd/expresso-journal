@@ -25,7 +25,6 @@
         padding: 20px;
       }
 
-      /* UPDATED HEADER */
       header {
         display: flex;
         justify-content: space-between;
@@ -51,7 +50,6 @@
         font-size: 1.1rem;
       }
 
-      /* NEW HISTORY BUTTON IN HEADER */
       #historyBtn {
         background: white;
         border: 1px solid var(--border);
@@ -230,48 +228,5 @@
     <div id="latest"></div>
 
     <script src="popup.js"></script>
-    <script>
-      // Keep existing UI logic scripts
-      const starEls = document.querySelectorAll('.star');
-      const rInput = document.getElementById('rating');
-      const rLabel = document.getElementById('ratingLabel');
-      
-      document.getElementById('stars').addEventListener('click', (e) => {
-        if(e.target.classList.contains('star')){
-          const val = Number(e.target.dataset.value);
-          rInput.value = val;
-          rLabel.textContent = val === 5 ? "Excellent!" : val + " Stars";
-          starEls.forEach(s => {
-            s.classList.toggle('active', Number(s.dataset.value) <= val);
-          });
-        }
-      });
-      
-      const btn = document.getElementById('logBtn');
-      const stat = document.getElementById('status');
-      const latest = document.getElementById('latest');
-      
-      btn.addEventListener('click', () => {
-         const sName = document.getElementById('storeName').value;
-         const ssid = document.getElementById('ssid').value;
-         if(!sName && !ssid) return;
-
-         btn.disabled = true;
-         btn.innerHTML = "Brewing Results... ☕"; 
-         latest.style.display = 'none';
-      });
-
-      const observer = new MutationObserver(() => {
-        if(stat.textContent.includes("Saved") || stat.textContent.includes("Error")) {
-          btn.disabled = false;
-          btn.textContent = "Run Speed Test & Save";
-          if(stat.textContent.includes("Saved")) {
-             latest.style.display = 'block';
-             stat.textContent = ""; 
-          }
-        }
-      });
-      observer.observe(stat, {childList: true});
-    </script>
   </body>
 </html>
