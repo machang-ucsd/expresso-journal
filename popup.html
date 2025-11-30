@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Coffee WiFi Logger</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 10px;
+        width: 320px;
+      }
+      h2 {
+        margin: 0 0 8px 0;
+      }
+      label {
+        display: block;
+        margin-top: 8px;
+        font-size: 0.9rem;
+      }
+      input, textarea, button {
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 4px;
+        font-size: 0.9rem;
+      }
+      textarea {
+        resize: vertical;
+      }
+      button {
+        margin-top: 12px;
+        padding: 6px 8px;
+        cursor: pointer;
+      }
+      .stars {
+        display: flex;
+        gap: 4px;
+        font-size: 1.3rem;
+        margin-top: 4px;
+      }
+      .star {
+        cursor: pointer;
+        user-select: none;
+      }
+      .small {
+        font-size: 0.8rem;
+        color: #555;
+      }
+      #status {
+        margin-top: 8px;
+        font-size: 0.85rem;
+      }
+      #latest {
+        margin-top: 6px;
+        font-size: 0.8rem;
+      }
+      .link-row {
+        margin-top: 10px;
+        text-align: right;
+      }
+      .link-row a {
+        font-size: 0.8rem;
+        text-decoration: none;
+        color: #0066cc;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Coffee WiFi Logger</h2>
+
+    <label>SSID
+      <input id="ssid" placeholder="CoffeeShop-WiFi" />
+    </label>
+
+    <label>Password (optional)
+      <input id="password" type="password" />
+    </label>
+
+    <label>Note
+      <textarea id="note" rows="2" placeholder="e.g. Quiet, lots of outlets"></textarea>
+    </label>
+
+    <label>Rating</label>
+    <div class="stars" id="stars">
+      <span class="star" data-value="1">☆</span>
+      <span class="star" data-value="2">☆</span>
+      <span class="star" data-value="3">☆</span>
+      <span class="star" data-value="4">☆</span>
+      <span class="star" data-value="5">☆</span>
+    </div>
+    <div class="small" id="ratingLabel">No rating yet</div>
+    <input type="hidden" id="rating" value="0" />
+
+    <button id="logBtn">Run Speed Test & Save</button>
+
+    <div id="status"></div>
+    <div id="latest" class="small"></div>
+
+    <div class="link-row">
+      <a href="#" id="openList">View all spots →</a>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

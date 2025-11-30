@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Coffee WiFi Logger",
+  "version": "0.1.0",
+  "description": "Log coffee shop WiFi speeds, ratings, and locations; browse by proximity.",
+  "permissions": [
+    "storage",
+    "geolocation"
+  ],
+  "host_permissions": [
+    "https://locate.measurementlab.net/*",
+    "https://*.measurementlab.net/*",
+    "https://www.google.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "128": "icons/icon128.png"
+    }
+  }
+}
