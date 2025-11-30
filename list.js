@@ -14,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function refresh() {
   spotsEl.innerHTML = "";
-  // Simple loading state
   refreshBtn.textContent = "Brewing...";
   refreshBtn.disabled = true;
   locStatusEl.textContent = "Locating...";
@@ -119,11 +118,10 @@ function haversine(lat1, lon1, lat2, lon2) {
 function renderSpots(spots) {
   spotsEl.innerHTML = "";
   spots.forEach((entry) => {
-    // Create Main Card
     const card = document.createElement("div");
     card.className = "spot-card";
 
-    // 1. Header Section (Name + Rating)
+    // 1. Header Section
     const header = document.createElement("div");
     header.className = "card-header";
     
@@ -132,12 +130,48 @@ function renderSpots(spots) {
     nameEl.className = "store-name";
     nameEl.textContent = entry.storeName || entry.ssid || "Unknown Spot";
     
+    // -- BADGE CONTAINER --
+    const badgeContainer = document.createElement("div");
+    badgeContainer.style.display = "flex";
+    badgeContainer.style.gap = "8px";
+    badgeContainer.style.alignItems = "center";
+
+    // SSID Badge
     const ssidEl = document.createElement("div");
     ssidEl.className = "ssid-badge";
     ssidEl.textContent = entry.ssid || "No SSID";
+    badgeContainer.appendChild(ssidEl);
+
+    // -- PASSWORD REVEAL LOGIC --
+    if (entry.password) {
+      const passEl = document.createElement("div");
+      // Styling it to look like a clickable secret badge
+      passEl.className = "ssid-badge"; // Reuse base badge style
+      passEl.style.backgroundColor = "#fff";
+      passEl.style.border = "1px solid #e6dccf";
+      passEl.style.cursor = "pointer";
+      passEl.style.userSelect = "none";
+      passEl.title = "Click to show password";
+      
+      const hiddenText = "🔒 ••••••";
+      const visibleText = `🔓 ${entry.password}`;
+      let isVisible = false;
+
+      passEl.textContent = hiddenText;
+
+      passEl.onclick = (e) => {
+        e.stopPropagation(); // Prevent triggering other things
+        isVisible = !isVisible;
+        passEl.textContent = isVisible ? visibleText : hiddenText;
+        passEl.style.backgroundColor = isVisible ? "#fff7ed" : "#fff";
+        passEl.style.borderColor = isVisible ? "#d4a373" : "#e6dccf";
+      };
+
+      badgeContainer.appendChild(passEl);
+    }
 
     titleGroup.appendChild(nameEl);
-    titleGroup.appendChild(ssidEl);
+    titleGroup.appendChild(badgeContainer);
 
     const ratingEl = document.createElement("div");
     ratingEl.className = "rating";
@@ -154,7 +188,6 @@ function renderSpots(spots) {
     const ulVal = entry.upload_mbps ? entry.upload_mbps.toFixed(1) : "--";
     const pingVal = entry.ping_ms ? entry.ping_ms.toFixed(0) : "--";
     
-    // Helper to make stat item
     const makeStat = (label, value, isFast) => {
       const div = document.createElement("div");
       div.className = "stat-item";
@@ -177,7 +210,7 @@ function renderSpots(spots) {
       noteEl.textContent = `“${entry.note}”`;
     }
 
-    // 4. Footer (Date + Distance + Delete)
+    // 4. Footer
     const footer = document.createElement("div");
     footer.className = "card-footer";
 
@@ -201,7 +234,6 @@ function renderSpots(spots) {
     footer.appendChild(metaDiv);
     footer.appendChild(delBtn);
 
-    // Assemble
     card.appendChild(header);
     card.appendChild(statsGrid);
     if (noteEl) card.appendChild(noteEl);

@@ -5,21 +5,19 @@
     <title>Coffee WiFi Logger</title>
     <style>
       :root {
-        /* Coffee Theme Palette */
-        --primary: #6f4e37;       /* Coffee Bean */
-        --primary-hover: #5d4037; /* Dark Roast */
-        --bg: #fdfbf7;            /* Cream / Milk foam */
+        --primary: #6f4e37;
+        --primary-hover: #5d4037;
+        --bg: #fdfbf7;
         --card: #ffffff;
-        --text: #433422;          /* Dark Espresso text */
-        --text-muted: #9c8c74;    /* Latte art color */
-        --border: #e6dccf;        /* Beige border */
+        --text: #433422;
+        --text-muted: #9c8c74;
+        --border: #e6dccf;
         --input-bg: #fffefe;
-        --accent-gold: #d4a373;   /* Caramel */
-        --danger: #dc2626;
+        --accent-gold: #d4a373;
       }
 
       body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         margin: 0;
         width: 340px;
         background-color: var(--bg);
@@ -27,6 +25,7 @@
         padding: 20px;
       }
 
+      /* UPDATED HEADER */
       header {
         display: flex;
         justify-content: space-between;
@@ -38,21 +37,42 @@
 
       h2 {
         margin: 0;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 800;
         color: var(--primary);
         letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
       }
       
       h2::before {
         content: "☕";
-        margin-right: 8px;
         font-size: 1.1rem;
       }
 
-      .form-group {
-        margin-bottom: 14px;
+      /* NEW HISTORY BUTTON IN HEADER */
+      #historyBtn {
+        background: white;
+        border: 1px solid var(--border);
+        color: var(--primary);
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(111, 78, 55, 0.05);
       }
+
+      #historyBtn:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+      }
+
+      .form-group { margin-bottom: 14px; }
 
       label {
         display: block;
@@ -85,12 +105,8 @@
         background: #fff;
       }
 
-      textarea {
-        resize: vertical;
-        min-height: 70px;
-      }
+      textarea { resize: vertical; min-height: 70px; }
 
-      /* Rating Stars */
       .rating-container {
         display: flex;
         justify-content: space-between;
@@ -106,24 +122,18 @@
         display: flex;
         gap: 8px;
         font-size: 1.6rem;
-        color: #e2e2e2; /* Unlit star */
+        color: #e2e2e2;
         cursor: pointer;
         line-height: 1;
       }
       
-      .stars .star:hover,
-      .stars .star.active {
-        color: var(--accent-gold); /* Caramel Gold */
+      .stars .star:hover, .stars .star.active {
+        color: var(--accent-gold);
         text-shadow: 0 1px 2px rgba(212, 163, 115, 0.3);
       }
 
-      #ratingLabel {
-        font-size: 0.85rem;
-        color: var(--text-muted);
-        font-weight: 600;
-      }
+      #ratingLabel { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
 
-      /* Buttons */
       button#logBtn {
         width: 100%;
         margin-top: 20px;
@@ -148,17 +158,8 @@
         box-shadow: 0 6px 8px rgba(111, 78, 55, 0.25);
       }
       
-      button#logBtn:active {
-        transform: translateY(0);
-      }
+      button#logBtn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
 
-      button#logBtn:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-        transform: none;
-      }
-
-      /* Status & Footer */
       #status {
         margin-top: 14px;
         font-size: 0.85rem;
@@ -171,7 +172,7 @@
       #latest {
         margin-top: 12px;
         padding: 12px;
-        background: #f0fdf4; /* Keep subtle green for success */
+        background: #f0fdf4;
         border: 1px solid #dcfce7;
         border-radius: 8px;
         color: #166534;
@@ -180,30 +181,12 @@
         text-align: center;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       }
-
-      .footer-link {
-        margin-top: 20px;
-        text-align: center;
-        padding-top: 12px;
-        border-top: 1px dashed var(--border);
-      }
-
-      .footer-link a {
-        font-size: 0.85rem;
-        text-decoration: none;
-        color: var(--primary);
-        font-weight: 600;
-        opacity: 0.8;
-      }
-      .footer-link a:hover {
-        opacity: 1;
-        text-decoration: underline;
-      }
     </style>
   </head>
   <body>
     <header>
-      <h2>Coffee WiFi Logger</h2>
+      <h2>Log a Spot</h2>
+      <button id="historyBtn">History 📜</button>
     </header>
 
     <div class="form-group">
@@ -246,13 +229,9 @@
     <div id="status"></div>
     <div id="latest"></div>
 
-    <div class="footer-link">
-      <a href="#" id="openList">View Past Spots →</a>
-    </div>
-
     <script src="popup.js"></script>
     <script>
-      // Visual logic for star interaction
+      // Keep existing UI logic scripts
       const starEls = document.querySelectorAll('.star');
       const rInput = document.getElementById('rating');
       const rLabel = document.getElementById('ratingLabel');
@@ -268,7 +247,6 @@
         }
       });
       
-      // Button state logic
       const btn = document.getElementById('logBtn');
       const stat = document.getElementById('status');
       const latest = document.getElementById('latest');
@@ -279,7 +257,7 @@
          if(!sName && !ssid) return;
 
          btn.disabled = true;
-         btn.innerHTML = "Brewing Results... ☕"; // Thematic text!
+         btn.innerHTML = "Brewing Results... ☕"; 
          latest.style.display = 'none';
       });
 

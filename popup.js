@@ -22,7 +22,8 @@ function setRating(value) {
   ratingLabel.textContent = value > 0 ? `Rating: ${value} star(s)` : "No rating yet";
 }
 
-document.getElementById("openList").addEventListener("click", (e) => {
+// --- UPDATED ID HERE ---
+document.getElementById("historyBtn").addEventListener("click", (e) => {
   e.preventDefault();
   chrome.tabs.create({ url: chrome.runtime.getURL("list.html") });
 });
@@ -34,7 +35,6 @@ logBtn.addEventListener("click", () => {
   const note = document.getElementById("note").value.trim();
   const rating = Number(ratingInput.value) || 0;
 
-  // You might want to require Store Name OR SSID, but usually one is good.
   if (!storeName && !ssid) {
     statusEl.textContent = "Please enter Store Name or SSID.";
     return;
@@ -90,5 +90,4 @@ logBtn.addEventListener("click", () => {
   );
 });
 
-// Default rating 0
 setRating(0);
