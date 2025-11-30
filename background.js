@@ -8,13 +8,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function handleRunLog(payload) {
-  const { ssid, password, note, rating, lat, lng } = payload;
+  // Added storeName to destructuring
+  const { storeName, ssid, password, note, rating, lat, lng } = payload;
 
   const speed = await runMlabSpeedTest();
 
   const entry = {
     id: crypto.randomUUID(),
     timestamp: new Date().toISOString(),
+    storeName: storeName || null, // Save it here
     ssid: ssid || null,
     password: password || null,
     note: note || null,
@@ -85,57 +87,30 @@ async function runMlabSpeedTest() {
   // --- 3. Upload Test (Step-Up Strategy) ---
   let uploadMbps = null;
   try {
-    // Helper to upload a specific size and return Mbps
     const performUpload = async (bytes) => {
-      // Create dummy data
-      const data = new Uint8Array(bytes); // Zeros are fine, Cloudflare handles it
+      const data = new Uint8Array(bytes);
       const start = performance.now();
-      
-      await fetch(UPLOAD_URL, {
-        method: "POST",
-        body: data,
-        cache: "no-store"
-      });
-      
+      await fetch(UPLOAD_URL, { method: "POST", body: data, cache: "no-store" });
       const durationSec = (performance.now() - start) / 1000;
       const bits = bytes * 8;
-      return {
-        mbps: (bits / 1_000_000) / durationSec,
-        duration: durationSec
-      };
+      return { mbps: (bits / 1_000_000) / durationSec, duration: durationSec };
     };
 
-    // Step A: Warm-up / Probe with 2MB
     const PROBE_SIZE = 2 * 1024 * 1024; 
     const probe = await performUpload(PROBE_SIZE);
 
     if (probe.duration > 2.0) {
-      // If 2MB took > 2 seconds, the connection is slow (< 8Mbps).
-      // The result is accurate enough.
       uploadMbps = probe.mbps;
     } else {
-      // Connection is fast. The probe was too short for accuracy.
-      // Calculate a target size that would take roughly 4 seconds.
-      // Target = (Mbps * 4s) / 8 bits-per-byte
-      // 1 Mbps = 125,000 bytes/sec
       const targetBytes = Math.floor((probe.mbps * 1_000_000 / 8) * 4);
-      
-      // Cap at 50MB to prevent memory issues or crazy timeouts
       const MAX_SIZE = 50 * 1024 * 1024; 
       const finalSize = Math.min(targetBytes, MAX_SIZE);
-      
-      // Step B: Run the real test
       const finalTest = await performUpload(finalSize);
       uploadMbps = finalTest.mbps;
     }
-
   } catch (e) {
     console.warn("Upload test failed", e);
   }
 
-  return {
-    downloadMbps,
-    uploadMbps,
-    pingMs,
-  };
+  return { downloadMbps, uploadMbps, pingMs };
 }

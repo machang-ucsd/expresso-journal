@@ -16,7 +16,6 @@ async function refresh() {
   spotsEl.innerHTML = "";
   locStatusEl.textContent = "Getting your location…";
 
-  // Attempt to get location
   try {
     userLocation = await getUserLocation();
     locStatusEl.textContent = `Your location: ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)} (sorted by proximity)`;
@@ -31,7 +30,6 @@ async function refresh() {
     return;
   }
 
-  // Calculate distances
   const logsWithDistance = logs.map((entry) => {
     let distanceKm = null;
     if (
@@ -49,7 +47,6 @@ async function refresh() {
     return { ...entry, distanceKm };
   });
 
-  // Sort by distance (closest first), or keep original order
   logsWithDistance.sort((a, b) => {
     if (a.distanceKm == null && b.distanceKm == null) return 0;
     if (a.distanceKm == null) return 1;
@@ -68,14 +65,10 @@ function loadLogs() {
   });
 }
 
-// --- NEW DELETE FUNCTION ---
 function deleteLog(id) {
   chrome.storage.sync.get("logs", (result) => {
     const logs = result.logs || [];
-    // Filter out the entry with the matching ID
     const newLogs = logs.filter((entry) => entry.id !== id);
-    
-    // Save back to storage and refresh UI
     chrome.storage.sync.set({ logs: newLogs }, () => {
       refresh(); 
     });
@@ -101,7 +94,7 @@ function getUserLocation() {
 }
 
 function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371; // km
+  const R = 6371;
   const toRad = (deg) => (deg * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
@@ -125,9 +118,10 @@ function renderSpots(spots) {
     const header = document.createElement("div");
     header.className = "spot-header";
 
-    const ssidEl = document.createElement("div");
-    ssidEl.className = "ssid";
-    ssidEl.textContent = entry.ssid || "(no SSID)";
+    const titleEl = document.createElement("div");
+    titleEl.className = "ssid"; // Keeping this class for bold styling
+    // Display Store Name first. Fallback to SSID if missing.
+    titleEl.textContent = entry.storeName || entry.ssid || "(Unnamed Spot)";
 
     const ratingEl = document.createElement("div");
     ratingEl.className = "rating";
@@ -137,7 +131,7 @@ function renderSpots(spots) {
         : "No rating";
     ratingEl.textContent = stars;
 
-    header.appendChild(ssidEl);
+    header.appendChild(titleEl);
     header.appendChild(ratingEl);
 
     // --- Meta Info ---
@@ -149,13 +143,15 @@ function renderSpots(spots) {
         ? `${entry.distanceKm.toFixed(2)} km away`
         : "Distance unknown";
 
-    // Safe formatting for speed values
     const dlStr = entry.download_mbps ? entry.download_mbps.toFixed(1) : "?";
     const ulStr = entry.upload_mbps ? entry.upload_mbps.toFixed(1) : "?";
     const pingStr = entry.ping_ms ? entry.ping_ms.toFixed(0) : "?";
+    
+    // Add SSID to the meta text if it exists and is different from the title
+    const ssidInfo = entry.ssid ? `SSID: ${entry.ssid} | ` : "";
 
     metaEl.textContent =
-      `${date} | ${distanceStr} | ` +
+      `${ssidInfo}${date} | ${distanceStr} | ` +
       `DL: ${dlStr} Mbps, UL: ${ulStr} Mbps, Ping: ${pingStr} ms`;
 
     // --- Note ---
@@ -165,14 +161,13 @@ function renderSpots(spots) {
       noteEl.textContent = entry.note;
     }
 
-    // --- Actions (Delete Button) ---
+    // --- Actions ---
     const actionsEl = document.createElement("div");
     actionsEl.style.marginTop = "10px";
     actionsEl.style.textAlign = "right";
 
     const deleteBtn = document.createElement("button");
     deleteBtn.textContent = "Remove";
-    // Basic styling for the button
     deleteBtn.style.padding = "4px 8px";
     deleteBtn.style.fontSize = "0.75rem";
     deleteBtn.style.color = "#c00";
@@ -181,16 +176,15 @@ function renderSpots(spots) {
     deleteBtn.style.borderRadius = "4px";
     deleteBtn.style.cursor = "pointer";
     
-    // Add delete functionality
     deleteBtn.addEventListener("click", () => {
-      if (confirm(`Are you sure you want to remove the log for "${entry.ssid || 'Unknown'}"?`)) {
+      const name = entry.storeName || entry.ssid || "this spot";
+      if (confirm(`Are you sure you want to remove the log for "${name}"?`)) {
         deleteLog(entry.id);
       }
     });
 
     actionsEl.appendChild(deleteBtn);
 
-    // Assemble the card
     div.appendChild(header);
     div.appendChild(metaEl);
     if (entry.note) div.appendChild(noteEl);

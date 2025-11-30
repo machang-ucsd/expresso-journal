@@ -28,13 +28,15 @@ document.getElementById("openList").addEventListener("click", (e) => {
 });
 
 logBtn.addEventListener("click", () => {
+  const storeName = document.getElementById("storeName").value.trim();
   const ssid = document.getElementById("ssid").value.trim();
   const password = document.getElementById("password").value.trim();
   const note = document.getElementById("note").value.trim();
   const rating = Number(ratingInput.value) || 0;
 
-  if (!ssid) {
-    statusEl.textContent = "Please enter SSID.";
+  // You might want to require Store Name OR SSID, but usually one is good.
+  if (!storeName && !ssid) {
+    statusEl.textContent = "Please enter Store Name or SSID.";
     return;
   }
 
@@ -48,12 +50,13 @@ logBtn.addEventListener("click", () => {
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       const { latitude, longitude } = pos.coords;
-      statusEl.textContent = "Running speed test (M-Lab)…";
+      statusEl.textContent = "Running speed test (this takes ~10s)…";
 
       chrome.runtime.sendMessage(
         {
           type: "RUN_LOG",
           payload: {
+            storeName,
             ssid,
             password,
             note,
@@ -74,10 +77,9 @@ logBtn.addEventListener("click", () => {
           const { entry } = response;
           statusEl.textContent = "Saved!";
           latestEl.textContent =
-            `DL: ${entry.download_mbps?.toFixed(1) ?? "?"} Mbps | ` +
-            `UL: ${entry.upload_mbps?.toFixed(1) ?? "?"} Mbps | ` +
-            `Ping: ${entry.ping_ms?.toFixed(1) ?? "?"} ms | ` +
-            `Loc: ${entry.lat.toFixed(4)}, ${entry.lng.toFixed(4)}`;
+            `DL: ${entry.download_mbps?.toFixed(1) ?? "?"} | ` +
+            `UL: ${entry.upload_mbps?.toFixed(1) ?? "?"} | ` +
+            `Ping: ${entry.ping_ms?.toFixed(0) ?? "?"}`;
         }
       );
     },
