@@ -16,15 +16,13 @@ async function refresh() {
   spotsEl.innerHTML = "";
   locStatusEl.textContent = "Getting your location…";
 
-  userLocation = await getUserLocation().catch((err) => {
-    locStatusEl.textContent = `Location error: ${err.message}`;
-    return null;
-  });
-
-  if (userLocation) {
-    locStatusEl.textContent = `Your location: ${userLocation.lat.toFixed(
-      4
-    )}, ${userLocation.lng.toFixed(4)} (sorted by proximity)`;
+  // Attempt to get location
+  try {
+    userLocation = await getUserLocation();
+    locStatusEl.textContent = `Your location: ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)} (sorted by proximity)`;
+  } catch (err) {
+    locStatusEl.textContent = `Location unavailable: ${err.message}`;
+    userLocation = null;
   }
 
   const logs = await loadLogs();
@@ -33,6 +31,7 @@ async function refresh() {
     return;
   }
 
+  // Calculate distances
   const logsWithDistance = logs.map((entry) => {
     let distanceKm = null;
     if (
@@ -50,6 +49,7 @@ async function refresh() {
     return { ...entry, distanceKm };
   });
 
+  // Sort by distance (closest first), or keep original order
   logsWithDistance.sort((a, b) => {
     if (a.distanceKm == null && b.distanceKm == null) return 0;
     if (a.distanceKm == null) return 1;
@@ -68,6 +68,20 @@ function loadLogs() {
   });
 }
 
+// --- NEW DELETE FUNCTION ---
+function deleteLog(id) {
+  chrome.storage.sync.get("logs", (result) => {
+    const logs = result.logs || [];
+    // Filter out the entry with the matching ID
+    const newLogs = logs.filter((entry) => entry.id !== id);
+    
+    // Save back to storage and refresh UI
+    chrome.storage.sync.set({ logs: newLogs }, () => {
+      refresh(); 
+    });
+  });
+}
+
 function getUserLocation() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
@@ -81,12 +95,11 @@ function getUserLocation() {
         });
       },
       (err) => reject(err),
-      { enableHighAccuracy: false, timeout: 10000 }
+      { enableHighAccuracy: false, timeout: 5000 }
     );
   });
 }
 
-// Haversine distance in km
 function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371; // km
   const toRad = (deg) => (deg * Math.PI) / 180;
@@ -108,6 +121,7 @@ function renderSpots(spots) {
     const div = document.createElement("div");
     div.className = "spot";
 
+    // --- Header ---
     const header = document.createElement("div");
     header.className = "spot-header";
 
@@ -126,6 +140,7 @@ function renderSpots(spots) {
     header.appendChild(ssidEl);
     header.appendChild(ratingEl);
 
+    // --- Meta Info ---
     const metaEl = document.createElement("div");
     metaEl.className = "meta";
     const date = new Date(entry.timestamp).toLocaleString();
@@ -133,21 +148,53 @@ function renderSpots(spots) {
       entry.distanceKm != null
         ? `${entry.distanceKm.toFixed(2)} km away`
         : "Distance unknown";
+
+    // Safe formatting for speed values
+    const dlStr = entry.download_mbps ? entry.download_mbps.toFixed(1) : "?";
+    const ulStr = entry.upload_mbps ? entry.upload_mbps.toFixed(1) : "?";
+    const pingStr = entry.ping_ms ? entry.ping_ms.toFixed(0) : "?";
+
     metaEl.textContent =
       `${date} | ${distanceStr} | ` +
-      `DL ${entry.download_mbps?.toFixed(1) ?? "?"} Mbps, ` +
-      `UL ${entry.upload_mbps?.toFixed(1) ?? "?"} Mbps, ` +
-      `Ping ${entry.ping_ms?.toFixed(1) ?? "?"} ms`;
+      `DL: ${dlStr} Mbps, UL: ${ulStr} Mbps, Ping: ${pingStr} ms`;
 
+    // --- Note ---
     const noteEl = document.createElement("div");
     noteEl.className = "note";
     if (entry.note) {
       noteEl.textContent = entry.note;
     }
 
+    // --- Actions (Delete Button) ---
+    const actionsEl = document.createElement("div");
+    actionsEl.style.marginTop = "10px";
+    actionsEl.style.textAlign = "right";
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Remove";
+    // Basic styling for the button
+    deleteBtn.style.padding = "4px 8px";
+    deleteBtn.style.fontSize = "0.75rem";
+    deleteBtn.style.color = "#c00";
+    deleteBtn.style.background = "#fff";
+    deleteBtn.style.border = "1px solid #c00";
+    deleteBtn.style.borderRadius = "4px";
+    deleteBtn.style.cursor = "pointer";
+    
+    // Add delete functionality
+    deleteBtn.addEventListener("click", () => {
+      if (confirm(`Are you sure you want to remove the log for "${entry.ssid || 'Unknown'}"?`)) {
+        deleteLog(entry.id);
+      }
+    });
+
+    actionsEl.appendChild(deleteBtn);
+
+    // Assemble the card
     div.appendChild(header);
     div.appendChild(metaEl);
     if (entry.note) div.appendChild(noteEl);
+    div.appendChild(actionsEl);
 
     spotsEl.appendChild(div);
   });
