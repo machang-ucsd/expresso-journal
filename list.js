@@ -14,19 +14,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function refresh() {
   spotsEl.innerHTML = "";
-  locStatusEl.textContent = "Getting your location…";
+  // Simple loading state
+  refreshBtn.textContent = "Loading...";
+  refreshBtn.disabled = true;
+  locStatusEl.textContent = "Locating...";
 
   try {
     userLocation = await getUserLocation();
-    locStatusEl.textContent = `Your location: ${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)} (sorted by proximity)`;
+    locStatusEl.textContent = `${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}`;
   } catch (err) {
-    locStatusEl.textContent = `Location unavailable: ${err.message}`;
+    locStatusEl.textContent = "No Location";
     userLocation = null;
   }
 
   const logs = await loadLogs();
+  refreshBtn.textContent = "Refresh";
+  refreshBtn.disabled = false;
+
   if (!logs.length) {
-    spotsEl.textContent = "No logged spots yet.";
+    spotsEl.innerHTML = `<div style="text-align:center; color:#888; margin-top:40px;">No spots logged yet. Go have a coffee! ☕️</div>`;
     return;
   }
 
@@ -111,85 +117,96 @@ function haversine(lat1, lon1, lat2, lon2) {
 function renderSpots(spots) {
   spotsEl.innerHTML = "";
   spots.forEach((entry) => {
-    const div = document.createElement("div");
-    div.className = "spot";
+    // Create Main Card
+    const card = document.createElement("div");
+    card.className = "spot-card";
 
-    // --- Header ---
+    // 1. Header Section (Name + Rating)
     const header = document.createElement("div");
-    header.className = "spot-header";
+    header.className = "card-header";
+    
+    const titleGroup = document.createElement("div");
+    const nameEl = document.createElement("div");
+    nameEl.className = "store-name";
+    nameEl.textContent = entry.storeName || entry.ssid || "Unknown Spot";
+    
+    const ssidEl = document.createElement("div");
+    ssidEl.className = "ssid-badge";
+    ssidEl.textContent = entry.ssid || "No SSID";
 
-    const titleEl = document.createElement("div");
-    titleEl.className = "ssid"; // Keeping this class for bold styling
-    // Display Store Name first. Fallback to SSID if missing.
-    titleEl.textContent = entry.storeName || entry.ssid || "(Unnamed Spot)";
+    titleGroup.appendChild(nameEl);
+    titleGroup.appendChild(ssidEl);
 
     const ratingEl = document.createElement("div");
     ratingEl.className = "rating";
-    const stars =
-      entry.rating && entry.rating > 0
-        ? "★".repeat(entry.rating) + "☆".repeat(5 - entry.rating)
-        : "No rating";
-    ratingEl.textContent = stars;
+    // Using filled stars only for cleaner look
+    ratingEl.textContent = entry.rating > 0 ? "★".repeat(entry.rating) : "";
 
-    header.appendChild(titleEl);
+    header.appendChild(titleGroup);
     header.appendChild(ratingEl);
 
-    // --- Meta Info ---
-    const metaEl = document.createElement("div");
-    metaEl.className = "meta";
-    const date = new Date(entry.timestamp).toLocaleString();
-    const distanceStr =
-      entry.distanceKm != null
-        ? `${entry.distanceKm.toFixed(2)} km away`
-        : "Distance unknown";
+    // 2. Stats Grid
+    const statsGrid = document.createElement("div");
+    statsGrid.className = "stats-grid";
 
-    const dlStr = entry.download_mbps ? entry.download_mbps.toFixed(1) : "?";
-    const ulStr = entry.upload_mbps ? entry.upload_mbps.toFixed(1) : "?";
-    const pingStr = entry.ping_ms ? entry.ping_ms.toFixed(0) : "?";
+    const dlVal = entry.download_mbps ? entry.download_mbps.toFixed(1) : "--";
+    const ulVal = entry.upload_mbps ? entry.upload_mbps.toFixed(1) : "--";
+    const pingVal = entry.ping_ms ? entry.ping_ms.toFixed(0) : "--";
     
-    // Add SSID to the meta text if it exists and is different from the title
-    const ssidInfo = entry.ssid ? `SSID: ${entry.ssid} | ` : "";
+    // Helper to make stat item
+    const makeStat = (label, value, isFast) => {
+      const div = document.createElement("div");
+      div.className = "stat-item";
+      div.innerHTML = `
+        <span class="stat-label">${label}</span>
+        <span class="stat-value ${isFast ? 'fast' : ''}">${value}</span>
+      `;
+      return div;
+    };
 
-    metaEl.textContent =
-      `${ssidInfo}${date} | ${distanceStr} | ` +
-      `DL: ${dlStr} Mbps, UL: ${ulStr} Mbps, Ping: ${pingStr} ms`;
+    // Color code DL if > 50 Mbps
+    statsGrid.appendChild(makeStat("Download", dlVal, entry.download_mbps > 50));
+    statsGrid.appendChild(makeStat("Upload", ulVal));
+    statsGrid.appendChild(makeStat("Ping", pingVal + "ms"));
 
-    // --- Note ---
-    const noteEl = document.createElement("div");
-    noteEl.className = "note";
+    // 3. Note Section (optional)
+    let noteEl = null;
     if (entry.note) {
-      noteEl.textContent = entry.note;
+      noteEl = document.createElement("div");
+      noteEl.className = "note-section";
+      noteEl.textContent = `"${entry.note}"`;
     }
 
-    // --- Actions ---
-    const actionsEl = document.createElement("div");
-    actionsEl.style.marginTop = "10px";
-    actionsEl.style.textAlign = "right";
+    // 4. Footer (Date + Distance + Delete)
+    const footer = document.createElement("div");
+    footer.className = "card-footer";
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "Remove";
-    deleteBtn.style.padding = "4px 8px";
-    deleteBtn.style.fontSize = "0.75rem";
-    deleteBtn.style.color = "#c00";
-    deleteBtn.style.background = "#fff";
-    deleteBtn.style.border = "1px solid #c00";
-    deleteBtn.style.borderRadius = "4px";
-    deleteBtn.style.cursor = "pointer";
+    const date = new Date(entry.timestamp).toLocaleDateString();
+    const dist = entry.distanceKm != null ? `${entry.distanceKm.toFixed(2)} km` : "";
     
-    deleteBtn.addEventListener("click", () => {
-      const name = entry.storeName || entry.ssid || "this spot";
-      if (confirm(`Are you sure you want to remove the log for "${name}"?`)) {
-        deleteLog(entry.id);
-      }
-    });
+    const metaDiv = document.createElement("div");
+    metaDiv.className = "timestamp";
+    metaDiv.textContent = `${date} ${dist ? " • " + dist : ""}`;
 
-    actionsEl.appendChild(deleteBtn);
+    const delBtn = document.createElement("button");
+    delBtn.className = "btn-delete";
+    delBtn.textContent = "Remove";
+    delBtn.onclick = () => {
+       const name = entry.storeName || entry.ssid || "this spot";
+       if (confirm(`Delete log for "${name}"?`)) {
+         deleteLog(entry.id);
+       }
+    };
 
-    div.appendChild(header);
-    div.appendChild(metaEl);
-    if (entry.note) div.appendChild(noteEl);
-    div.appendChild(actionsEl);
+    footer.appendChild(metaDiv);
+    footer.appendChild(delBtn);
 
-    spotsEl.appendChild(div);
+    // Assemble
+    card.appendChild(header);
+    card.appendChild(statsGrid);
+    if (noteEl) card.appendChild(noteEl);
+    card.appendChild(footer);
+
+    spotsEl.appendChild(card);
   });
 }
