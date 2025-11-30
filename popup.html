@@ -2,18 +2,20 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Espresso Journal</title>
+    <title>Coffee WiFi Logger</title>
     <style>
       :root {
-        --primary: #2563eb;
-        --primary-hover: #1d4ed8;
-        --bg: #f8fafc;
+        /* Coffee Theme Palette */
+        --primary: #6f4e37;       /* Coffee Bean */
+        --primary-hover: #5d4037; /* Dark Roast */
+        --bg: #fdfbf7;            /* Cream / Milk foam */
         --card: #ffffff;
-        --text: #0f172a;
-        --text-muted: #64748b;
-        --border: #e2e8f0;
-        --input-bg: #ffffff;
-        --danger: #ef4444;
+        --text: #433422;          /* Dark Espresso text */
+        --text-muted: #9c8c74;    /* Latte art color */
+        --border: #e6dccf;        /* Beige border */
+        --input-bg: #fffefe;
+        --accent-gold: #d4a373;   /* Caramel */
+        --danger: #dc2626;
       }
 
       body {
@@ -22,58 +24,70 @@
         width: 340px;
         background-color: var(--bg);
         color: var(--text);
-        padding: 16px;
+        padding: 20px;
       }
 
       header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 16px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--border);
+        padding-bottom: 12px;
       }
 
       h2 {
         margin: 0;
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--primary);
+        letter-spacing: -0.5px;
+      }
+      
+      h2::before {
+        content: "☕";
+        margin-right: 8px;
         font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--text);
       }
 
       .form-group {
-        margin-bottom: 12px;
+        margin-bottom: 14px;
       }
 
       label {
         display: block;
-        font-size: 0.75rem;
-        font-weight: 600;
+        font-size: 0.7rem;
+        font-weight: 700;
         color: var(--text-muted);
-        margin-bottom: 4px;
+        margin-bottom: 6px;
         text-transform: uppercase;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.05em;
       }
 
       input, textarea {
         width: 100%;
         box-sizing: border-box;
-        padding: 10px;
+        padding: 12px;
         border: 1px solid var(--border);
-        border-radius: 6px;
+        border-radius: 8px;
         background: var(--input-bg);
-        font-size: 0.9rem;
+        font-size: 0.95rem;
+        color: var(--text);
         font-family: inherit;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(111, 78, 55, 0.02);
       }
 
       input:focus, textarea:focus {
         outline: none;
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        box-shadow: 0 0 0 3px rgba(111, 78, 55, 0.15);
+        background: #fff;
       }
 
       textarea {
         resize: vertical;
-        min-height: 60px;
+        min-height: 70px;
       }
 
       /* Rating Stars */
@@ -83,96 +97,113 @@
         align-items: center;
         background: var(--card);
         border: 1px solid var(--border);
-        padding: 8px 12px;
-        border-radius: 6px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(111, 78, 55, 0.02);
       }
 
       .stars {
         display: flex;
-        gap: 6px;
-        font-size: 1.5rem;
-        color: #cbd5e1; /* Gray star color */
+        gap: 8px;
+        font-size: 1.6rem;
+        color: #e2e2e2; /* Unlit star */
         cursor: pointer;
+        line-height: 1;
       }
       
+      .stars .star:hover,
       .stars .star.active {
-        color: #fbbf24; /* Gold star color */
+        color: var(--accent-gold); /* Caramel Gold */
+        text-shadow: 0 1px 2px rgba(212, 163, 115, 0.3);
       }
 
       #ratingLabel {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         color: var(--text-muted);
-        font-weight: 500;
+        font-weight: 600;
       }
 
       /* Buttons */
       button#logBtn {
         width: 100%;
-        margin-top: 16px;
-        padding: 12px;
+        margin-top: 20px;
+        padding: 14px;
         background-color: var(--primary);
         color: white;
         border: none;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        font-weight: 600;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 700;
         cursor: pointer;
-        transition: background-color 0.2s;
+        transition: transform 0.1s, background-color 0.2s;
+        box-shadow: 0 4px 6px rgba(111, 78, 55, 0.2);
         display: flex;
         justify-content: center;
         align-items: center;
-        gap: 8px;
       }
 
       button#logBtn:hover {
         background-color: var(--primary-hover);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 8px rgba(111, 78, 55, 0.25);
+      }
+      
+      button#logBtn:active {
+        transform: translateY(0);
       }
 
       button#logBtn:disabled {
         opacity: 0.7;
         cursor: not-allowed;
+        transform: none;
       }
 
       /* Status & Footer */
       #status {
-        margin-top: 12px;
+        margin-top: 14px;
         font-size: 0.85rem;
         text-align: center;
         min-height: 1.2em;
         color: var(--text-muted);
+        font-style: italic;
       }
 
       #latest {
-        margin-top: 8px;
-        padding: 10px;
-        background: #ecfdf5;
-        border: 1px solid #d1fae5;
-        border-radius: 6px;
-        color: #065f46;
+        margin-top: 12px;
+        padding: 12px;
+        background: #f0fdf4; /* Keep subtle green for success */
+        border: 1px solid #dcfce7;
+        border-radius: 8px;
+        color: #166534;
         font-size: 0.8rem;
-        display: none; /* Hidden until success */
+        display: none; 
         text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       }
 
       .footer-link {
-        margin-top: 16px;
+        margin-top: 20px;
         text-align: center;
+        padding-top: 12px;
+        border-top: 1px dashed var(--border);
       }
 
       .footer-link a {
         font-size: 0.85rem;
         text-decoration: none;
-        color: var(--text-muted);
-        font-weight: 500;
+        color: var(--primary);
+        font-weight: 600;
+        opacity: 0.8;
       }
       .footer-link a:hover {
-        color: var(--primary);
+        opacity: 1;
+        text-decoration: underline;
       }
     </style>
   </head>
   <body>
     <header>
-      <h2>Espresso Journal</h2>
+      <h2>Coffee WiFi Logger</h2>
     </header>
 
     <div class="form-group">
@@ -216,12 +247,12 @@
     <div id="latest"></div>
 
     <div class="footer-link">
-      <a href="#" id="openList">View History →</a>
+      <a href="#" id="openList">View Past Spots →</a>
     </div>
 
     <script src="popup.js"></script>
     <script>
-      // Tiny inline script to handle the visual class toggling for stars
+      // Visual logic for star interaction
       const starEls = document.querySelectorAll('.star');
       const rInput = document.getElementById('rating');
       const rLabel = document.getElementById('ratingLabel');
@@ -230,37 +261,35 @@
         if(e.target.classList.contains('star')){
           const val = Number(e.target.dataset.value);
           rInput.value = val;
-          rLabel.textContent = val + " Stars";
+          rLabel.textContent = val === 5 ? "Excellent!" : val + " Stars";
           starEls.forEach(s => {
             s.classList.toggle('active', Number(s.dataset.value) <= val);
           });
         }
       });
       
-      // Visual logic for the button state
+      // Button state logic
       const btn = document.getElementById('logBtn');
       const stat = document.getElementById('status');
       const latest = document.getElementById('latest');
       
       btn.addEventListener('click', () => {
-         // Simple validation check before showing loading state
          const sName = document.getElementById('storeName').value;
          const ssid = document.getElementById('ssid').value;
          if(!sName && !ssid) return;
 
          btn.disabled = true;
-         btn.textContent = "Testing Speed...";
+         btn.innerHTML = "Brewing Results... ☕"; // Thematic text!
          latest.style.display = 'none';
       });
 
-      // Listen for changes to status to reset button (a bit hacky but works with your existing logic)
       const observer = new MutationObserver(() => {
         if(stat.textContent.includes("Saved") || stat.textContent.includes("Error")) {
           btn.disabled = false;
           btn.textContent = "Run Speed Test & Save";
           if(stat.textContent.includes("Saved")) {
              latest.style.display = 'block';
-             stat.textContent = ""; // Clear status text since we show the green box
+             stat.textContent = ""; 
           }
         }
       });

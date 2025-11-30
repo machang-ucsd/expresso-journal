@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
 async function refresh() {
   spotsEl.innerHTML = "";
   // Simple loading state
-  refreshBtn.textContent = "Loading...";
+  refreshBtn.textContent = "Brewing...";
   refreshBtn.disabled = true;
   locStatusEl.textContent = "Locating...";
 
@@ -28,11 +28,13 @@ async function refresh() {
   }
 
   const logs = await loadLogs();
-  refreshBtn.textContent = "Refresh";
+  refreshBtn.textContent = "Refresh List";
   refreshBtn.disabled = false;
 
   if (!logs.length) {
-    spotsEl.innerHTML = `<div style="text-align:center; color:#888; margin-top:40px;">No spots logged yet. Go have a coffee! ☕️</div>`;
+    spotsEl.innerHTML = `<div style="text-align:center; color:#9c8c74; margin-top:60px; font-size: 1.1rem;">
+      No spots logged yet.<br><br>Go have a coffee! ☕️
+    </div>`;
     return;
   }
 
@@ -139,7 +141,6 @@ function renderSpots(spots) {
 
     const ratingEl = document.createElement("div");
     ratingEl.className = "rating";
-    // Using filled stars only for cleaner look
     ratingEl.textContent = entry.rating > 0 ? "★".repeat(entry.rating) : "";
 
     header.appendChild(titleGroup);
@@ -164,17 +165,16 @@ function renderSpots(spots) {
       return div;
     };
 
-    // Color code DL if > 50 Mbps
     statsGrid.appendChild(makeStat("Download", dlVal, entry.download_mbps > 50));
     statsGrid.appendChild(makeStat("Upload", ulVal));
     statsGrid.appendChild(makeStat("Ping", pingVal + "ms"));
 
-    // 3. Note Section (optional)
+    // 3. Note Section
     let noteEl = null;
     if (entry.note) {
       noteEl = document.createElement("div");
       noteEl.className = "note-section";
-      noteEl.textContent = `"${entry.note}"`;
+      noteEl.textContent = `“${entry.note}”`;
     }
 
     // 4. Footer (Date + Distance + Delete)
@@ -193,7 +193,7 @@ function renderSpots(spots) {
     delBtn.textContent = "Remove";
     delBtn.onclick = () => {
        const name = entry.storeName || entry.ssid || "this spot";
-       if (confirm(`Delete log for "${name}"?`)) {
+       if (confirm(`Remove "${name}" from your history?`)) {
          deleteLog(entry.id);
        }
     };
