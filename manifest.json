@@ -8,9 +8,8 @@
     "geolocation"
   ],
   "host_permissions": [
-    "https://locate.measurementlab.net/*",
-    "https://*.measurementlab.net/*",
-    "https://www.google.com/*"
+    "https://www.google.com/*",
+    "https://speed.cloudflare.com/*"
   ],
   "background": {
     "service_worker": "background.js",
