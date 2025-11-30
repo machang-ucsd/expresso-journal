@@ -5,7 +5,6 @@ const statusEl = document.getElementById("status");
 const latestEl = document.getElementById("latest");
 const logBtn = document.getElementById("logBtn");
 
-// Star click handling
 starsEl.addEventListener("click", (e) => {
   const star = e.target.closest(".star");
   if (!star) return;
@@ -22,7 +21,6 @@ function setRating(value) {
   ratingLabel.textContent = value > 0 ? `Rating: ${value} star(s)` : "No rating yet";
 }
 
-// --- UPDATED ID HERE ---
 document.getElementById("historyBtn").addEventListener("click", (e) => {
   e.preventDefault();
   chrome.tabs.create({ url: chrome.runtime.getURL("list.html") });

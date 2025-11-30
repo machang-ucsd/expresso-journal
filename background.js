@@ -3,20 +3,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handleRunLog(message.payload)
       .then((entry) => sendResponse({ entry }))
       .catch((err) => sendResponse({ error: err.message || String(err) }));
+    // Return true to indicate async response
     return true;
   }
 });
 
 async function handleRunLog(payload) {
-  // Added storeName to destructuring
   const { storeName, ssid, password, note, rating, lat, lng } = payload;
 
+  // Run the safer speed test
   const speed = await runMlabSpeedTest();
-
+  
+  const id = crypto.randomUUID();
   const entry = {
-    id: crypto.randomUUID(),
+    id: id,
     timestamp: new Date().toISOString(),
-    storeName: storeName || null, // Save it here
+    storeName: storeName || null,
     ssid: ssid || null,
     password: password || null,
     note: note || null,
@@ -28,10 +30,8 @@ async function handleRunLog(payload) {
     lng: typeof lng === "number" ? lng : null,
   };
 
-  const result = await chrome.storage.sync.get("logs");
-  const logs = result.logs || [];
-  logs.push(entry);
-  await chrome.storage.sync.set({ logs });
+  const storageKey = `log_${id}`;
+  await chrome.storage.sync.set({ [storageKey]: entry });
 
   return entry;
 }
@@ -41,7 +41,7 @@ async function runMlabSpeedTest() {
   const DOWNLOAD_URL = "https://speed.cloudflare.com/__down?bytes=50000000"; 
   const UPLOAD_URL = "https://speed.cloudflare.com/__up";
 
-  // --- 1. Ping Test ---
+  // --- 1. PING ---
   let pingMs = null;
   try {
     const startPing = performance.now();
@@ -51,65 +51,107 @@ async function runMlabSpeedTest() {
     console.warn("Ping failed", e);
   }
 
-  // --- 2. Download Test (Time-boxed 5s) ---
+  // --- 2. DOWNLOAD (Streaming with Timeout) ---
   let downloadMbps = null;
   try {
-    const resp = await fetch(DOWNLOAD_URL, { cache: "no-store" });
+    const controller = new AbortController();
+    // Safety: Hard kill download after 7 seconds max
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+    const resp = await fetch(DOWNLOAD_URL, { 
+      cache: "no-store", 
+      signal: controller.signal 
+    });
+    
     if (!resp.ok) throw new Error(`Status ${resp.status}`);
 
     const reader = resp.body.getReader();
     let receivedLength = 0;
     let startTime = performance.now();
     let endTime = startTime;
-    
-    const TEST_DURATION_MS = 5000; 
+    const TEST_DURATION_MS = 5000; // Aim for 5s test
 
     while (true) {
       const { done, value } = await reader.read();
       endTime = performance.now();
+      
       if (done) break;
       receivedLength += value.length;
+      
+      // Stop reading if we exceed duration
       if ((endTime - startTime) > TEST_DURATION_MS) {
         await reader.cancel();
         break;
       }
     }
+    clearTimeout(timeoutId);
 
     const durationSec = (endTime - startTime) / 1000;
     if (durationSec > 0 && receivedLength > 0) {
-      const bits = receivedLength * 8;
-      downloadMbps = (bits / 1_000_000) / durationSec;
+      downloadMbps = (receivedLength * 8 / 1_000_000) / durationSec;
     }
   } catch (e) {
-    console.warn("Download test failed", e);
+    console.warn("Download failed", e);
   }
 
-  // --- 3. Upload Test (Step-Up Strategy) ---
+  // --- 3. UPLOAD (Step-Up with Abort Safety) ---
   let uploadMbps = null;
   try {
-    const performUpload = async (bytes) => {
-      const data = new Uint8Array(bytes);
-      const start = performance.now();
-      await fetch(UPLOAD_URL, { method: "POST", body: data, cache: "no-store" });
-      const durationSec = (performance.now() - start) / 1000;
-      const bits = bytes * 8;
-      return { mbps: (bits / 1_000_000) / durationSec, duration: durationSec };
+    // Helper that enforces a strict timeout on the upload request
+    const performUpload = async (bytes, timeoutMs = 8000) => {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      
+      try {
+        const data = new Uint8Array(bytes);
+        const start = performance.now();
+        
+        await fetch(UPLOAD_URL, { 
+          method: "POST", 
+          body: data, 
+          cache: "no-store",
+          signal: controller.signal 
+        });
+        
+        clearTimeout(id);
+        const durationSec = (performance.now() - start) / 1000;
+        return { 
+          mbps: (bytes * 8 / 1_000_000) / durationSec, 
+          duration: durationSec,
+          success: true
+        };
+      } catch (err) {
+        clearTimeout(id);
+        return { success: false, error: err };
+      }
     };
 
-    const PROBE_SIZE = 2 * 1024 * 1024; 
-    const probe = await performUpload(PROBE_SIZE);
+    // Step A: Probe (2MB)
+    const probe = await performUpload(2 * 1024 * 1024, 5000); // 5s timeout for probe
 
-    if (probe.duration > 2.0) {
-      uploadMbps = probe.mbps;
-    } else {
-      const targetBytes = Math.floor((probe.mbps * 1_000_000 / 8) * 4);
-      const MAX_SIZE = 50 * 1024 * 1024; 
-      const finalSize = Math.min(targetBytes, MAX_SIZE);
-      const finalTest = await performUpload(finalSize);
-      uploadMbps = finalTest.mbps;
+    if (probe.success) {
+      if (probe.duration > 2.0) {
+        // Slow connection, probe is accurate enough
+        uploadMbps = probe.mbps;
+      } else {
+        // Fast connection, scale up
+        // Cap max size to 20MB (reduced from 50MB) to prevent hanging
+        const targetBytes = Math.min(Math.floor((probe.mbps * 1_000_000 / 8) * 4), 20 * 1024 * 1024);
+        
+        // Step B: Final Test
+        const finalTest = await performUpload(targetBytes, 10000); // 10s timeout
+        
+        if (finalTest.success) {
+          uploadMbps = finalTest.mbps;
+        } else {
+          // If final test timed out/failed, fallback to probe speed
+          console.warn("Upload final test timed out, using probe result");
+          uploadMbps = probe.mbps;
+        }
+      }
     }
   } catch (e) {
-    console.warn("Upload test failed", e);
+    console.warn("Upload failed", e);
   }
 
   return { downloadMbps, uploadMbps, pingMs };

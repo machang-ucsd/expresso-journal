@@ -6,7 +6,6 @@ const viewToggleBtn = document.getElementById("viewToggleBtn");
 let userLocation = null;
 
 // --- VIEW MODE LOGIC ---
-// Check saved preference
 const savedView = localStorage.getItem("viewMode");
 if (savedView === "compact") {
   document.body.classList.add("compact-view");
@@ -26,7 +25,6 @@ viewToggleBtn.addEventListener("click", () => {
     localStorage.setItem("viewMode", "card");
   }
 });
-// -----------------------
 
 refreshBtn.addEventListener("click", () => {
   refresh();
@@ -90,19 +88,23 @@ async function refresh() {
 
 function loadLogs() {
   return new Promise((resolve) => {
-    chrome.storage.sync.get("logs", (result) => {
-      resolve(result.logs || []);
+    chrome.storage.sync.get(null, (items) => {
+      const logs = [];
+      for (const key in items) {
+        if (key.startsWith("log_")) {
+          logs.push(items[key]);
+        }
+      }
+      logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      resolve(logs);
     });
   });
 }
 
 function deleteLog(id) {
-  chrome.storage.sync.get("logs", (result) => {
-    const logs = result.logs || [];
-    const newLogs = logs.filter((entry) => entry.id !== id);
-    chrome.storage.sync.set({ logs: newLogs }, () => {
-      refresh(); 
-    });
+  const key = `log_${id}`;
+  chrome.storage.sync.remove(key, () => {
+    refresh();
   });
 }
 
@@ -150,7 +152,6 @@ function renderSpots(spots) {
     header.className = "card-header";
     
     const titleGroup = document.createElement("div");
-    // Ensure Flex behavior for compact mode alignment
     titleGroup.style.display = "flex";
     titleGroup.style.alignItems = "center";
     titleGroup.style.gap = "8px";
