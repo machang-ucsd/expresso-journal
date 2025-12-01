@@ -1,0 +1,224 @@
+body {
+  padding: 32px;
+  transition: padding 0.2s;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+header {
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+h1 {
+  font-size: 1.8rem;
+}
+
+h1::before {
+  margin-right: 12px;
+  font-size: 1.6rem;
+}
+
+/* --- Controls --- */
+.controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#locStatus {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-right: 8px;
+  font-style: italic;
+}
+
+/* Header Buttons */
+header button {
+  padding: 8px 16px;
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 0.85rem;
+}
+
+header button:hover {
+  border-color: var(--primary);
+  background: #f3e9e2; /* Light foam */
+  color: var(--primary);
+}
+
+/* --- Grid & Cards --- */
+#spots {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.spot-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(111, 78, 55, 0.08); 
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.2s ease;
+}
+
+.spot-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(111, 78, 55, 0.12);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.store-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #2c2114;
+  margin-bottom: 6px;
+}
+
+.rating {
+  color: var(--accent-gold);
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+}
+
+/* --- Badges --- */
+.ssid-badge {
+  font-size: 0.75rem;
+  background: #f3e9e2;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--primary);
+  font-family: monospace;
+  display: inline-block;
+}
+
+/* --- Stats Grid --- */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: #fafaf9;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px dashed var(--border);
+  text-align: center;
+}
+
+.stat-item { display: flex; flex-direction: column; }
+.stat-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; }
+.stat-value { font-size: 1.1rem; font-weight: 800; color: #2c2114; font-variant-numeric: tabular-nums; }
+.stat-value.fast { color: var(--success); }
+
+/* --- Footer --- */
+.note-section {
+  font-size: 0.95rem;
+  color: var(--text);
+  background: #f3e9e2;
+  padding: 12px;
+  border-radius: 8px;
+  font-style: italic;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.timestamp { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+
+.btn-delete {
+  background: white;
+  border: 1px solid #fecaca;
+  color: var(--danger);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.btn-delete:hover { background: #fef2f2; border-color: var(--danger); }
+
+/* --- COMPACT MODE OVERRIDES --- */
+body.compact-view #spots {
+  gap: 8px;
+}
+
+body.compact-view .spot-card {
+  padding: 10px 16px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  border-radius: 8px;
+  transform: none !important; 
+}
+
+body.compact-view .card-header {
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0;
+}
+
+body.compact-view .store-name {
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+
+body.compact-view .rating {
+  font-size: 1rem;
+  margin-left: 8px;
+}
+
+body.compact-view .stats-grid {
+  display: flex;
+  padding: 0;
+  background: transparent;
+  border: none;
+  gap: 16px;
+  width: auto;
+}
+
+body.compact-view .stat-item {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 4px;
+}
+
+body.compact-view .stat-label { display: none; }
+
+body.compact-view .stat-item:nth-child(1) .stat-value::after { content: " DL"; font-size: 0.7rem; color: var(--text-muted); font-weight: normal; }
+body.compact-view .stat-item:nth-child(2) .stat-value::after { content: " UL"; font-size: 0.7rem; color: var(--text-muted); font-weight: normal; }
+body.compact-view .stat-item:nth-child(3) .stat-value::after { content: " ms"; font-size: 0.7rem; color: var(--text-muted); font-weight: normal; }
+
+body.compact-view .stat-value { font-size: 0.9rem; }
+body.compact-view .note-section { display: none; }
+
+body.compact-view .card-footer {
+  padding-top: 0;
+  border-top: none;
+  margin-top: 0;
+  flex-direction: row-reverse;
+  gap: 12px;
+}
+
+body.compact-view .timestamp { font-size: 0.75rem; }
